@@ -98,6 +98,14 @@
             // this is for feedback informing them that their press has been registered.
             on_load: function() {
                 document.addEventListener('keydown', function(e) {
+                    // record the keypress time
+                    //var current_data = jsPsych.data.get().last(1).values()[0];
+                    //current_data.all_keypresses.push({
+                        //key: e.key,
+                        //time: performance.now()
+                    //});
+
+                    // visual feedback in the form of a tick 
                     var fixation = document.getElementById('fixation');
                     if (fixation) {
                         fixation.innerHTML = '✓';
