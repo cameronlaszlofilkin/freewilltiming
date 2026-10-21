@@ -10,7 +10,15 @@
     </head>
     <body></body>
     <script>
-        var jsPsych = initJsPsych();
+        var jsPsych = initJsPsych({
+            on_finish: function() {
+                DataPipe.save({
+                    experimentID: "3UkeFinItwMF",
+                    filename: jsPsych.randomization.randomID(10) + ".csv",
+                    data: jsPsych.data.get().csv()
+                });
+            }
+        });
 
         var timeline = [];
 
@@ -33,7 +41,7 @@
                 <p>Some trials will be <strong>longer</strong>, and some will be <strong>shorter</strong>.</p>
                 <p> Press <kbd>spacebar</kbd> when you feel like it, and wait until the end of the trial.</p>
                 <div style='width: 700px;'>
-                <div display: block; margin: auto;'><img src='img/oist.png'></img>
+                <div 'display: block; margin: auto;'><img src='img/oist.png'></img>
                 </div>
                 <p>Press any key to begin.</p>
             `,
@@ -46,7 +54,7 @@
             stimulus: '<div style="font-size: 60px;">+</div>',
             choices: "ALL_KEYS",
             trial_duration: function(){
-                return jsPsych.randomization.sampleWithoutReplacement([15000, 30000, 45000, 60000], 1)[0];
+                return jsPsych.randomization.sampleWithoutReplacement([30000, 45000, 60000, 75000, 90000], 1)[0];
             },
             response_ends_trial: false,
             data: {
