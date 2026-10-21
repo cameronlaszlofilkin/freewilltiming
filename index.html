@@ -55,7 +55,7 @@
             stimulus: '<div style="font-size: 60px;">+</div>',
             choices: "ALL_KEYS",
             trial_duration: function(){
-                return jsPsych.randomization.sampleWithoutReplacement([30000, 45000, 60000, 75000, 90000], 1)[0];
+                return jsPsych.randomization.sampleWithoutReplacement([5000, 10000, 15000, 20000], 1)[0];
             },
             response_ends_trial: false,
             data: {
@@ -66,7 +66,7 @@
         var procedure = {
             timeline: [trial],
             randomize_order: true,
-            repetitions: 5
+            repetitions: 4
         };
         timeline.push(procedure);
 
