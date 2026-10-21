@@ -6,20 +6,24 @@
         <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@2.2.0"></script>
         <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@2.2.0"></script>
         <script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0"></script>
-        <script src="https://pipe.jspsych.org/api/data"></script>
+        <script src="https://unpkg.com/@jspsych/extension-pipe@0.2.0"></script>
         <link href="https://unpkg.com/jspsych@8.3.0/css/jspsych.css" rel="stylesheet" type="text/css" />
     </head>
     <body></body>
     <script>
         var jsPsych = initJsPsych({
-            on_finish: function() {
-                DataPipe.save({
-                    experimentID: "3UkeFinItwMF",
-                    filename: jsPsych.randomization.randomID(10) + ".csv",
-                    data: jsPsych.data.get().csv()
-                });
-            }
+            extensions: [
+                {
+                    type: jsPsychExtensionPipe,
+                    params: {
+                        experiment_id: "3UkeFinItwMF",
+                        filename: () => `${subject_id}.csv`
+                    }
+                }
+            ]
         });
+        
+        const subject_id = jsPsych.randomization.randomID(10);
 
         var timeline = [];
 
@@ -63,10 +67,17 @@
             }
         };
 
+        var inter_trial = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<p>Get ready for the next trial.</p><p>Press any key to continue.</p>',
+            post_trial_gap: 500
+        };
+
+        timeline.push(trial);
+
         var procedure = {
-            timeline: [trial],
-            randomize_order: true,
-            repetitions: 4
+            timeline: [inter_trial, trial],
+            repetitions: 3
         };
         timeline.push(procedure);
 
