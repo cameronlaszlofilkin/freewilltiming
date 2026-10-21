@@ -7,6 +7,8 @@
         <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@2.2.0"></script>
         <script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0"></script>
         <script src="https://unpkg.com/@jspsych/extension-pipe@0.2.0"></script>
+        <script src="https://unpkg.com/@jspsych/plugin-survey-text@2.0.0"></script> 
+        <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@2.0.0"></script>
         <link href="https://unpkg.com/jspsych@8.3.0/css/jspsych.css" rel="stylesheet" type="text/css" />
     </head>
     <body></body>
@@ -16,14 +18,15 @@
                 {
                     type: jsPsychExtensionPipe,
                     params: {
-                        experiment_id: "3UkeFinItwMF",
+                        experiment_id: "hrxTmM3RnjAX",
                         filename: () => `${subject_id}.csv`
                     }
                 }
             ]
         });
         
-        const subject_id = jsPsych.randomization.randomID(10);
+        const subject_id = new URLSearchParams(window.location.search).get('PROLIFIC_PID') || jsPsych.randomization.randomID(10);
+        // it takes the Prolific ID when it can, but otherwise it will generate a random ID as a fallback.
 
         var timeline = [];
 
@@ -39,12 +42,40 @@
         };
         timeline.push(welcome);
 
+        // a questionnaire for age, free entry.
+        var age = {
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: "How old are you?",
+                    name: 'age',
+                    required: true
+                }
+            ]
+        };
+        timeline.push(age);
+
+        // questionnaire for gender, multiple choice.
+        var gender = {
+            type: jsPsychSurveyMultiChoice,
+            questions: [
+                {
+                    prompt: "What is your gender?",
+                    name: 'gender',
+                    options: ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
+                    required: true
+                }
+            ]
+        };
+        timeline.push(gender);
+
         var instructions = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
-                <p>In this experiment, you will asked to click at any point during a trial.</p><p>You should click whenever you feel the urge to.</p>
-                <p>Some trials will be <strong>longer</strong>, and some will be <strong>shorter</strong>.</p>
-                <p> Press <kbd>spacebar</kbd> when you feel like it, and wait until the end of the trial.</p>
+                <p>In this experiment, you are asked to click at any point during a trial.</p>
+                <p>Each trial is 60 seconds long, and there are 5 trials in total.</p>
+                <p>You should click at any point during a trial, <strong>whenever you feel an urge to</strong>.</p>
+                <p> Press <kbd>spacebar</kbd> when you want to click, and wait for the end of the trial.</p>
                 <div style='width: 700px;'>
                 <div style='display: block; margin: auto;'><img src='img/oist.png'></img>
                 </div>
@@ -56,14 +87,24 @@
 
         var trial = {
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: '<div style="font-size: 60px;">+</div>',
-            choices: "ALL_KEYS",
-            trial_duration: function(){
-                return jsPsych.randomization.sampleWithoutReplacement([5000, 10000, 15000, 20000], 1)[0];
-            },
+            stimulus: '<div id="fixation" style="font-size: 60px;">+</div>',
+            choices: [' '],
+            trial_duration: 60000, //this can be changed to random, see randtimings.html file.
             response_ends_trial: false,
             data: {
                 task: 'response'
+            },
+            // this is for feedback informing them that their press has been registered.
+            on_load: function() {
+                document.addEventListener('keydown', function(e) {
+                    var fixation = document.getElementById('fixation');
+                    if (fixation) {
+                        fixation.innerHTML = '✓';
+                        setTimeout(function() {
+                            fixation.innerHTML = '+';
+                        }, 200);
+                    }
+                });
             }
         };
 
@@ -72,12 +113,11 @@
             stimulus: '<p>Get ready for the next trial.</p><p>Press any key to continue.</p>',
             post_trial_gap: 500
         };
-
-        timeline.push(trial);
+        timeline.push(trial); // initial trial is pushed due to the inter-trial screen needed only between trials.
 
         var procedure = {
             timeline: [inter_trial, trial],
-            repetitions: 3
+            repetitions: 4 // see previous comment.
         };
         timeline.push(procedure);
 
@@ -87,9 +127,17 @@
 
                 var trials = jsPsych.data.get().filter({task: 'response'});
                 var rt = Math.round(trials.select('rt').mean());
-                var rt_sec = rt / 1000;
+                var rt_sec = (rt / 1000).toFixed(2);
 
-                return `<p>Your average response time was ${rt_sec}s.</p>
+                var rt_text = isNaN(rt) ? 
+                    '<p>You did not respond during some trials.</p>' : 
+                    `<p>Your average response time was ${rt_sec}s.</p>`;
+
+                return `${rt_text}
+                    <p>If you do not want your data to be used, please send us an email with your anonymous Participant ID and it will be removed.</p>
+                    <p>Participant ID: ${subject_id}.</p>
+                    <p>Email address: <a href="mailto:brian.morrissey@oist.jp">brian.morrissey@oist.jp</a>
+                    or <a href="mailto:cameronlaszlo.filkin@oist.jp">cameronlaszlo.filkin@oist.jp</a>.</p>
                     <p>Press any key to complete the experiment. Thank you!</p>`;
             }
         };
